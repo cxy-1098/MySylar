@@ -7,6 +7,7 @@
 #include <list> 
 #include <stringstream> // 
 #include <fstream>      // 文件的ofstream要用到
+#include <vector>
 
 namespace sylar
 {
@@ -46,9 +47,24 @@ class LogFormatter
 {
 public:
     typedef std::shared_ptr<LogFormatter> ptr;
+    LogFormatter(const std::string& m_pattern);
     
+    // 格式：%t     %thread_id %m%n
     std::string format(LogEvent::ptr event);
 private:
+    // 基类format项，后面会具体用很多子类来实现
+    class FormatItem 
+    {
+    public:
+        typedef std::shared_ptr<FormatItem> ptr;
+        virtual ~FormatItem() {}    // 虚析构函数
+        virtual void format(std::ostream& os, LogEvent::ptr event) = 0; // 纯虚函数
+    };
+
+    void init();        // 做日志格式（pattern）解析
+private:
+    std::string m_pattern;                  // 格式结构，根据pattern格式解析出item的信息
+    std::vector<FormatItem::ptr> m_items;   // 日志格式有很多项
 };
 
 // 日志输出地
