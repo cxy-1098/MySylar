@@ -3,6 +3,25 @@
 namespace sylar
 {
 
+const char* LogLevel::ToString(LogLevel::Level level) {
+    switch(level) { // 定义了一个宏来取level
+# define XX(name) \
+    case LogLevel::name: \
+        return #name;   \
+        break;
+
+    xx(DEBUG);
+    XX(INFO);
+    XX(WARN);
+    XX(ERROR);
+    XX(FATAL);
+#undef XX
+    default:
+        return "UNKNOW";
+    }
+    return "UNKNOW";
+}
+
 Logger::Logger(const std::string& name)
     :m_name(name) {
 }
@@ -86,38 +105,132 @@ LogFormatter::LogFormatter(const std::string& pattern)
 
 }
 
-std::string LogFormatter::format(LogEvent::ptr event) {
+std::string LogFormatter::format(LogLevel::Level level, LogEvent::ptr event) {
     std::stringstream ss;
     for (auto& i : m_items) {
-        i->format(ss, event);   // 输出事件到接收流
+        i->format(ss, level, event);   // 输出事件到接收流
     }
     return ss.str();
 }
 
 // 做日志格式解析
-/** 仿照log4j格式：
- * 如果使用pattern布局就要指定的打印信息的具体格式ConversionPattern，打印参数如下：
- * %m 输出代码中指定的消息；
- * %M 输出打印该条日志的方法名；
- * %p 输出优先级，即DEBUG，INFO，WARN，ERROR，FATAL；
- * %r 输出自应用启动到输出该log信息耗费的毫秒数；
- * %c 输出所属的类目，通常就是所在类的全名；
- * %t 输出产生该日志事件的线程名；
- * %n 输出一个回车换行符，Windows平台为"rn”，Unix平台为"n”；
- * %d 输出日志时间点的日期或时间，默认格式为ISO8601，也可以在其后指定格式，比如：%d{yyyy-MM-dd HH:mm:ss,SSS}，输出类似：2002-10-18 22:10:28,921；
- * %l 输出日志事件的发生位置，及在代码中的行数；
- * [QC]是log信息的开头，可以为任意字符，一般为项目简称。
-**/
-// 格式可能为 %xxx 和 %xxx{xxx}，但也可能就是要输出 %，即 %%，则需要判断
+// 格式可能为 %xxx(%后直接跟格式) 和 %xxx{xxx}(格式里还套了格式，第一个xxx格式称为str，第二个xxx称为format），
+// 但也可能就是要输出 %，即转义 %%，则需要判断
 void LogFormatter::init();        
-    std::vector<std::pair<std::string, int>> vec;
-    size_t last_pos = 0;        // 上一次解析位置
+    // str, format, type    
+    // 如%xxx{xxx}，第一个xxx称为str格式，第二个xxx称为format格式，type 0表异常状态，1表正常状态
+    std::vector<std::tuple<std::string, std::string, int>> vec;
+    std::string nstr;               // normal string
     for (size_t i = 0; i < m_pattern.size(); ++i) {
+        // 如果等于%，说明他可能是一种格式，但到底是不是还需要确定一下
+        if (m_pattern[i] != '%') {    // 不等于%，则不是格式
+            str.append(1, m_pattern[i]);
+            continue;
+        }
 
+        // 说明是真的%，即%%，不是格式
+        if ((i + 1) < m_pattern.size()) {
+            if (m_pattern[i + 1] == '%') {
+                nstr.append(1, '%');
+                continue;
+            }
+        }
+
+        // 等于%，可能是格式
+        size_t n = i + 1;       // 判断%下一个字符
+        int fmt_status = 0;     // format状态，0初始状态，1开始解析格式，2解析完毕格式
+        size_t fmt_begin = 0;   // %xxx{xxx} 中 {} 内的xxx的开始位置
+
+        std::string str;
+        std::string fmt;
+        while (n < m_pattern.size()) {
+            // 如果%后有空格不连续了，那就不是格式了
+            if (isspace(m_pattern[n])) { 
+                break;
+            }
+            // 始终以%xxx{xxx}为例子，第一个xxx称为str格式，第二个xxx称为format格式
+            if (fmt_status == 0) {
+                // 遇到了左括号，说明 %xxx{xxx} 的 { 之前的str xxx已经找到了，即格式已经找到了
+                if (m_pattern[n] == '{') {  
+                    str = m_pattern.substr(i + 1, n - i - 1);
+                    fmt_status = 1;     // 开始解析格式
+                    fmt_begin = n;      
+                    ++n;
+                    continue;
+                }
+                if (fmt_status == 1) {
+                    // %xxx{xxx} 中 {} 内的format xxx 解析完毕
+                    if (m_pattern[n] == '}') {
+                        fmt = m_pattern.substr(fmt_begin + 1, n - fmt_begin - 1);
+                        fmt_status = 2; // 解析完毕格式
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 循环完了之后的各种状态
+        if (fmt_status == 0) {          // 只有第一个str格式的xxx，正常的情况
+            if (!nstr.empty()) {        // 格式前面有normal string，也放进去
+                vec.push_back(std::make_pair(nstr, "", 0));
+            }
+            str = m_pattern.substr(i + 1, n - i - 1);   
+            vec.push_back(std::make_tuple(str, fmt, 1));    // 将解析的结果放入vector，1表正常状态
+            i = n;
+        }else if (fmt_status == 1) {    // 只找到 { 没有找到 } 括号，是错误的情况
+            std::cout << "pattern parse error: " << m_pattern << " - " << m_pattern.substr(i) << std::endl;
+            vec.push_back(std::make_tuple("pattern_error", fmt, 0));    // 0表异常状态
+        }else if (fmt_status == 2) {    // 找到了 {} ，正常情况
+            if (!nstr.empty()) {        // 格式前面有normal string，也放进去
+                vec.push_back(std::make_pair(nstr, "", 0));
+            }
+            vec.push_back(std::make_tuple(str, fmt, 1));
+            i = n;
+        }
     }
+
+    if (!nstr.empty()) {        
+        vec.push_back(std::make_pair(nstr, "", 0));
+    }
+
+    /** 仿照log4j格式：
+    * 如果使用pattern布局就要指定的打印信息的具体格式ConversionPattern，打印参数如下：
+    * %m 输出代码中指定的消息；
+    * %p 输出优先级level，即DEBUG，INFO，WARN，ERROR，FATAL；
+    * %r 输出自应用启动到输出该log信息耗费的毫秒数；
+    * %c 输出所属的类目，日志名称，通常就是所在类的全名；
+    * %t 输出产生该日志事件的线程名id；
+    * %n 输出一个回车换行符，Windows平台为"rn”，Unix平台为"n”；
+    * %d 输出日志时间点的日期或时间，默认格式为ISO8601，也可以在其后指定格式，比如：%d{yyyy-MM-dd HH:mm:ss,SSS}，输出类似：2002-10-18 22:10:28,921；
+    * %l 输出日志事件的发生位置，及在代码中的行数；
+    * %f 输出文件名
+    **/
 
 
 }
+
+// 七八个实例
+class MessageFormatItem : public LogFormatter::FormatItem 
+{
+public:
+    void format(std::ostream& os, LogLevel::Level level, LogEvent::ptr event) override {
+        os << event->getContent();
+    }
+};
+
+class LevelFormatItem : public LogFormatter::FormatItem 
+{
+public:
+    void format(std::ostream& os, LogLevel::Level level, LogEvent::ptr event) override {
+        os << LogLevel::ToString(level);
+    }
+};
+
+
+
+
+
+
 
 
 }
