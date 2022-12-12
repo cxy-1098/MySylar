@@ -12,6 +12,8 @@
 namespace sylar
 {
 
+class Logger;
+
 // 日志事件
 class LogEvent
 {
@@ -61,16 +63,17 @@ public:
     LogFormatter(const std::string& m_pattern);
     
     // 格式：%t     %thread_id %m%n
-    std::string format(LogLevel::Level level, LogEvent::ptr event);
+    std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
 private:
     // 基类format项，后面会具体用很多子类来实现
     class FormatItem 
     {
     public:
         typedef std::shared_ptr<FormatItem> ptr;
+        FormatItem(const std::string& fmt = "") {};
         virtual ~FormatItem() {}    // 虚析构函数
         // 输出到ostream流里，可以多个组合起来，性能比输出到string好
-        virtual void format(std::ostream& os, LogLevel::Level level, LogEvent::ptr event) = 0; // 纯虚函数
+        virtual void format(std::ostream& os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0; // 纯虚函数
     };
 
     void init();        // 做日志格式（pattern）解析
@@ -93,7 +96,7 @@ public:
     virtual ~LogAppender() {};  
 
     // 定义基类的log，纯虚函数，所以在子类必须实现
-    virtual void log(LogLevel::Level level, LogEvent::ptr event) = 0;
+    virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
 
     // 不同的输出地有不同的输出格式
     void setFormatter(LogFormatter::ptr val) { m_formatter = val;}
@@ -125,6 +128,8 @@ public:
     void delAppender(LogAppender::ptr appender);            // 删除appender
     LogLevel::Level getLevel() const { return m_level;}     // 获取日志级别
     void setLevel(LogLevel::Level val) { m_level = val;}    // 设置级别
+
+    const std::string& getName() const { return m_name;}
 private:
     std::string m_name;                         // 日志名称
     LogLevel::Level m_level;                    // 日志级别
