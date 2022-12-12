@@ -111,6 +111,15 @@ public:
     }
 };
 
+// 输出回车换行符
+class NewLineFormatItem : public LogFormatter::FormatItem 
+{
+public:
+    void format(std::ostream& os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override {
+        os << std::endl;
+    }
+};
+
 // 输出
 class StringFormatItem : public LogFormatter::FormatItem 
 {
@@ -220,7 +229,7 @@ std::string LogFormatter::format(std::shared_ptr<Logger> logger, LogLevel::Level
 // 但也可能就是要输出 %，即转义 %%，则需要判断
 void LogFormatter::init();        
     // str, format, type    
-    // 如%xxx{xxx}，第一个xxx称为str格式，第二个xxx称为format格式，type 0表异常状态，1表正常状态
+    // 如%xxx{xxx}，第一个xxx称为str格式，第二个xxx称为format格式，type 0表只有string类型的XXX，1表%XXX{XXX}类型
     std::vector<std::tuple<std::string, std::string, int>> vec;
     std::string nstr;               // normal string
     for (size_t i = 0; i < m_pattern.size(); ++i) {
@@ -300,9 +309,15 @@ void LogFormatter::init();
         {#str, [](const std:: string& fmt) { return FormatItem::ptr(new C(fmt));}}
 
         XX(m, MessageFormatItem),
-
-    }
-
+        XX(p, LevelFormatItem),
+        XX(r, ElapseFormatItem),
+        XX(c, NameFormatItem),
+        XX(t, ThreadIdFormatItem),
+        XX(n, NewLineFormatItem);
+        XX(d, DateTimeFormatItem);
+        XX(f, FilenameFormatItem);
+        XX(l, LineFormatItem);
+#undef XX
     /** 仿照log4j格式：
     * 如果使用pattern布局就要指定的打印信息的具体格式ConversionPattern，打印参数如下：
     * %m 输出代码中指定的消息；
@@ -315,7 +330,26 @@ void LogFormatter::init();
     * %l 输出日志事件的发生位置，及在代码中的行数；
     * %f 输出文件名
     **/
+    };
 
+    for (auto& i : vec) {
+        if (std::get<2>(i) == 0) {
+            // %XXX类型，即只有string类型的XXX格式
+            m_items.push_back(FormatItem::ptr(new StringFormatItem(std::get<0>(i))));
+        } else {    
+            // %XXX{XXX}类型
+            auto it = s_format_items.find(std::get<0>(i));
+            if (it == s_format_items.end()) {
+                // 说明错误格式，因为找到第一个XXX就已经到尾端了，没有第二个{XXX}
+                m_items.push_back(FormatItem::ptr(new StringFormatItem("error_format %" + std::get<0>(i) + ">>")));
+            } else {
+                m_items.push_back(it->second(std::get<1>(i)));
+            }
+        }
+
+        // 输出debug一下
+        std::cout << std::get<0>(i) << " - " << std::get<1>(i) << " - " << std::get<2>(i) << std::endl;
+    }
 
 }
 
