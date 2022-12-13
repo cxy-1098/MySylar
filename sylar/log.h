@@ -25,7 +25,7 @@ public:
 
     const char* getFile() const { return m_file;}
     int32_t getLine() const { return m_line;}
-    uint32_t getElapse() const { return m_elapse};
+    uint32_t getElapse() const { return m_elapse;}
     uint32_t getThreadId() const { return m_threadId;}
     uint32_t getFiberId() const { return m_fiberId;}
     uint64_t getTime() const { return m_time;}
@@ -46,7 +46,7 @@ class LogLevel
 {
 public:
     enum Level {
-        UNKNOW = 0;
+        UNKNOW = 0,
         DEBUG = 1,
         INFO = 2,
         WARN = 3,
@@ -66,7 +66,7 @@ public:
     
     // 格式：%t     %thread_id %m%n
     std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
-private:
+public:
     // 基类format项，后面会具体用很多子类来实现
     class FormatItem 
     {
@@ -101,7 +101,7 @@ public:
 
     // 不同的输出地有不同的输出格式
     void setFormatter(LogFormatter::ptr val) { m_formatter = val;}
-    LogFormatter::ptr getFormatter() const { return m_formatter};
+    LogFormatter::ptr getFormatter() const { return m_formatter;}
 //// 因为是基类，成员属性用protected则子类就能使用到
 protected:
     LogLevel::Level m_level;            // 日志级别

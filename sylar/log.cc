@@ -11,11 +11,11 @@ const char* LogLevel::ToString(LogLevel::Level level) {
         return #name;   \
         break;
 
-    xx(DEBUG),
-    XX(INFO),
-    XX(WARN),
-    XX(ERROR),
-    XX(FATAL),
+    XX(DEBUG);
+    XX(INFO);
+    XX(WARN);
+    XX(ERROR);
+    XX(FATAL);
 #undef XX
     default:
         return "UNKNOW";
@@ -246,7 +246,7 @@ void LogFormatter::init();
     for (size_t i = 0; i < m_pattern.size(); ++i) {
         // 如果等于%，说明他可能是一种格式，但到底是不是还需要确定一下
         if (m_pattern[i] != '%') {    // 不等于%，则不是格式
-            str.append(1, m_pattern[i]);
+            nstr.append(1, m_pattern[i]);
             continue;
         }
 
