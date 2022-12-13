@@ -5,9 +5,11 @@
 #include <stdint.h>     // 各种类型int的头文件
 #include <memory>       // shared_ptr的头文件
 #include <list> 
-#include <stringstream> // 
+#include <sstream>      // string流 
 #include <fstream>      // 文件的ofstream要用到
 #include <vector>
+#include <iostream>
+#include <functional>
 
 namespace sylar
 {
@@ -70,7 +72,6 @@ private:
     {
     public:
         typedef std::shared_ptr<FormatItem> ptr;
-        FormatItem(const std::string& fmt = "") {};
         virtual ~FormatItem() {}    // 虚析构函数
         // 输出到ostream流里，可以多个组合起来，性能比输出到string好
         virtual void format(std::ostream& os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0; // 纯虚函数
@@ -108,7 +109,8 @@ protected:
 };
 
 // 日志器
-class Logger
+// 只有继承了std::enable_shared_from_this<Logger>，成员函数才能用shared_from_this()获取自己的指针
+class Logger : public std::enable_shared_from_this<Logger>
 {
 public:
     typedef std::shared_ptr<Logger> ptr;
@@ -141,7 +143,7 @@ class StdoutLogAppender : public LogAppender
 {
 public:
     typedef std::shared_ptr<StdoutLogAppender> ptr;
-    void log(LogLevel::Level level, LogEvent::ptr event) override;
+    void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
 private:
 };
 
@@ -151,7 +153,7 @@ class FileLogAppender : public LogAppender
 public:
     typedef std::shared_ptr<FileLogAppender> ptr;
     FileLogAppender(const std::string& filename);
-    void log(LogLevel::Level level, LogEvent::ptr event) override;
+    void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
 
     // 有时候会重新打开日志文件，文件打开成功，返回true
     bool reopen();              
