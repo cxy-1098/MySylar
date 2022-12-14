@@ -1,5 +1,5 @@
 #include "log.h"
-#include <map>
+
 
 namespace sylar
 {
@@ -88,12 +88,19 @@ public:
 class DateTimeFormatItem : public LogFormatter::FormatItem 
 {
 public:
-    DateTimeFormatItem(const std::string& format = "%Y:%m:%d %H:%M:%S")
+    DateTimeFormatItem(const std::string& format = "%Y-%m-%d %H:%M:%S")
         :m_format(format) {
-
+        if (m_format.empty()) {
+            m_format = "%Y-%m-%d %H:%M:%S";
+        }
     }
     void format(std::ostream& os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override {
-        os << event->getTime();
+        struct  tm tm;
+        time_t time = event->getTime();
+        localtime_r(&time, &tm);
+        char buf[64];
+        strftime(buf, sizeof(buf), m_format.c_str(), &tm);     // 将获取的系统时间转为设定格式
+        os << buf;
     }
 private:
     std::string m_format;
@@ -156,7 +163,7 @@ LogEvent::LogEvent(const char* file, int32_t line, uint32_t elapse,
 
 Logger::Logger(const std::string& name)
     :m_name(name), m_level(LogLevel::DEBUG) {
-    m_formatter.reset(new LogFormatter("%d [%p] %f %l %m %n"));    // 初始化输出格式
+    m_formatter.reset(new LogFormatter("%d [%p] <%f:%l>     %m %n"));    // 初始化输出格式
 }
 
 // 添加appender
@@ -285,7 +292,7 @@ void LogFormatter::init() {
         std::string fmt;
         while (n < m_pattern.size()) {
             // 如果%后有空格不连续了，那就不是格式了
-            if (isspace(m_pattern[n])) { 
+            if (!isalpha(m_pattern[n]) && m_pattern[n] != '{' && m_pattern[n] != '}') { 
                 break;
             }
             // 始终以%xxx{xxx}为例子，第一个xxx称为str格式，第二个xxx称为format格式
@@ -318,7 +325,7 @@ void LogFormatter::init() {
             }
             str = m_pattern.substr(i + 1, n - i - 1);   
             vec.push_back(std::make_tuple(str, fmt, 1));    // 将解析的结果放入vector，1表正常状态
-            i = n;
+            i = n - 1;
         }else if (fmt_status == 1) {    // 只找到 { 没有找到 } 括号，是错误的情况
             std::cout << "pattern parse error: " << m_pattern << " - " << m_pattern.substr(i) << std::endl;
             vec.push_back(std::make_tuple("pattern_error", fmt, 0));    // 0表异常状态
@@ -328,7 +335,7 @@ void LogFormatter::init() {
                 nstr.clear();
             }
             vec.push_back(std::make_tuple(str, fmt, 1));
-            i = n;
+            i = n - 1;
         }
     }
 
