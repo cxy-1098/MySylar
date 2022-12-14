@@ -23,6 +23,18 @@ const char* LogLevel::ToString(LogLevel::Level level) {
     return "UNKNOW";
 }
 
+ LogEventWrap::LogEventWrap(LogEvent::ptr e)
+    :m_event(e) {
+ }
+
+ LogEventWrap::~LogEventWrap() {
+    m_event->getLogger()->log(m_event->getLevel(), m_event);
+ }
+
+std::stringstream& LogEventWrap::getSS() {
+    return m_event->getSS();
+}
+
 // 七八个实例
 // 输出信息
 class MessageFormatItem : public LogFormatter::FormatItem 
@@ -136,6 +148,16 @@ public:
     }
 };
 
+// 输出tab符
+class TabFormatItem : public LogFormatter::FormatItem 
+{
+public:
+    TabFormatItem(const std::string& str = "") {}
+    void format(std::ostream& os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override {
+        os << "\t";
+    }
+};
+
 // 输出
 class StringFormatItem : public LogFormatter::FormatItem 
 {
@@ -149,21 +171,24 @@ private:
     std::string m_string;
 };
 
-LogEvent::LogEvent(const char* file, int32_t line, uint32_t elapse,
+LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char* file, int32_t line, uint32_t elapse,
             uint32_t thread_id, uint32_t fiber_id, uint64_t time) 
             :m_file(file)
             ,m_line(line)
             ,m_elapse(elapse)
             ,m_threadId(thread_id)
             ,m_fiberId(fiber_id)
-            ,m_time(time) {
+            ,m_time(time) 
+            ,m_logger(logger) 
+            ,m_level(level) {
 
-            }
+}
 
 
 Logger::Logger(const std::string& name)
     :m_name(name), m_level(LogLevel::DEBUG) {
-    m_formatter.reset(new LogFormatter("%d [%p] <%f:%l>     %m %n"));    // 初始化输出格式
+    // 初始化输出格式：时间，线程号，协程号，日志级别，日志名称，文件名，文件名，行号，日志内容
+    m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));    
 }
 
 // 添加appender
@@ -285,14 +310,16 @@ void LogFormatter::init() {
 
         // 等于%，可能是格式
         size_t n = i + 1;       // 判断%下一个字符
-        int fmt_status = 0;     // format状态，0初始状态，1开始解析格式，2解析完毕格式
+        int fmt_status = 0;     // format状态，0正常格式，1错误格式
         size_t fmt_begin = 0;   // %xxx{xxx} 中 {} 内的xxx的开始位置
 
         std::string str;
         std::string fmt;
         while (n < m_pattern.size()) {
             // 如果%后有空格不连续了，那就不是格式了
-            if (!isalpha(m_pattern[n]) && m_pattern[n] != '{' && m_pattern[n] != '}') { 
+            if (!fmt_status && (!isalpha(m_pattern[n]) && m_pattern[n] != '{' 
+                    && m_pattern[n] != '}')) { 
+                str = m_pattern.substr(i + 1, n - i -1);
                 break;
             }
             // 始终以%xxx{xxx}为例子，第一个xxx称为str格式，第二个xxx称为format格式
@@ -305,15 +332,20 @@ void LogFormatter::init() {
                     ++n;
                     continue;
                 }
-                if (fmt_status == 1) {
-                    // %xxx{xxx} 中 {} 内的format xxx 解析完毕
-                    if (m_pattern[n] == '}') {
-                        fmt = m_pattern.substr(fmt_begin + 1, n - fmt_begin - 1);
-                        fmt_status = 2; // 解析完毕格式
-                        break;
-                    }
+            } else if (fmt_status == 1) {
+                // %xxx{xxx} 中 {} 内的format xxx 解析完毕
+                if (m_pattern[n] == '}') {
+                    fmt = m_pattern.substr(fmt_begin + 1, n - fmt_begin - 1);
+                    fmt_status = 0; // 解析完毕格式
+                    ++n;
+                    break;
                 }
-                ++n;
+            }
+            ++n;
+            if (n == m_pattern.size()) {
+                if (str.empty()) {
+                    str = m_pattern.substr(i + 1);
+                }
             }
         }
 
@@ -323,20 +355,21 @@ void LogFormatter::init() {
                 vec.push_back(std::make_tuple(nstr, "", 0));
                 nstr.clear();
             }
-            str = m_pattern.substr(i + 1, n - i - 1);   
+            // str = m_pattern.substr(i + 1, n - i - 1);   
             vec.push_back(std::make_tuple(str, fmt, 1));    // 将解析的结果放入vector，1表正常状态
             i = n - 1;
         }else if (fmt_status == 1) {    // 只找到 { 没有找到 } 括号，是错误的情况
             std::cout << "pattern parse error: " << m_pattern << " - " << m_pattern.substr(i) << std::endl;
-            vec.push_back(std::make_tuple("pattern_error", fmt, 0));    // 0表异常状态
-        }else if (fmt_status == 2) {    // 找到了 {} ，正常情况
-            if (!nstr.empty()) {        // 格式前面有normal string，也放进去
-                vec.push_back(std::make_tuple(nstr, "", 0));
-                nstr.clear();
-            }
-            vec.push_back(std::make_tuple(str, fmt, 1));
-            i = n - 1;
+            vec.push_back(std::make_tuple("<<pattern_error>>", fmt, 0));    // 0表异常状态
         }
+        // else if (fmt_status == 2) {    // 找到了 {} ，正常情况
+        //     if (!nstr.empty()) {        // 格式前面有normal string，也放进去
+        //         vec.push_back(std::make_tuple(nstr, "", 0));
+        //         nstr.clear();
+        //     }
+        //     vec.push_back(std::make_tuple(str, fmt, 1));
+        //     i = n - 1;
+        // }
     }
 
     if (!nstr.empty()) {        
@@ -356,6 +389,8 @@ void LogFormatter::init() {
         XX(d, DateTimeFormatItem),
         XX(f, FilenameFormatItem),
         XX(l, LineFormatItem),
+        XX(T, TabFormatItem),
+        XX(F, FiberIdFormatItem),
 #undef XX
     /** 仿照log4j格式：
     * 如果使用pattern布局就要指定的打印信息的具体格式ConversionPattern，打印参数如下：
@@ -368,6 +403,8 @@ void LogFormatter::init() {
     * %d 输出日志时间点的日期或时间，默认格式为ISO8601，也可以在其后指定格式，比如：%d{yyyy-MM-dd HH:mm:ss,SSS}，输出类似：2002-10-18 22:10:28,921；
     * %l 输出日志事件的发生位置，及在代码中的行数；
     * %f 输出文件名  
+    * %T 输出tab符号    
+    * %F 输出协程号id
     **/
     };
 

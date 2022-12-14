@@ -10,6 +10,7 @@ set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -o0 -g -std=c++11 -Wall -Wno-depre
 # 将源码设置到LIB_SRC上
 set(LIB_SRC
     sylar/log.cc
+    sylar/util.cc
     )
 
 add_library(sylar SHARED ${LIB_SRC})    # 添加 SHARED 库，生成 so 文件
