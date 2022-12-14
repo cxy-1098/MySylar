@@ -3,15 +3,16 @@ project(sylar)                      # 定义一个项目
 
 set(CMAKE_VERBOSE_MAKEFILE ON)      # 要求在make过程中显示一些详细命令
 # 自定义的一些编译参数放进去
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -o3 -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -o0 -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function")
+
+
 
 # 将源码设置到LIB_SRC上
 set(LIB_SRC
     sylar/log.cc
     )
 
-# 添加 SHARED 库，生成 so 文件
-add_library(sylar SHARED ${LIB_SRC})
+add_library(sylar SHARED ${LIB_SRC})    # 添加 SHARED 库，生成 so 文件
 # add_library(sylar_static STATIC ${LIB_SRC})
 # SET_TARGET_PROPERTIES {sylar_static PROPERTIES OUTPUT_NAME "sylar"}
 
@@ -21,5 +22,5 @@ target_link_libraries(test sylar)   # 链接于lib
 
 # 输出 lib 生成的路径
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-SET(LIBRARU_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 

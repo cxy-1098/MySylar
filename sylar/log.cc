@@ -142,16 +142,33 @@ private:
     std::string m_string;
 };
 
+LogEvent::LogEvent(const char* file, int32_t line, uint32_t elapse,
+            uint32_t thread_id, uint32_t fiber_id, uint64_t time) 
+            :m_file(file)
+            ,m_line(line)
+            ,m_elapse(elapse)
+            ,m_threadId(thread_id)
+            ,m_fiberId(fiber_id)
+            ,m_time(time) {
+
+            }
+
+
 Logger::Logger(const std::string& name)
-    :m_name(name) {
+    :m_name(name), m_level(LogLevel::DEBUG) {
+    m_formatter.reset(new LogFormatter("%d [%p] %f %l %m %n"));    // 初始化输出格式
 }
 
 // 添加appender
-void addAppender(LogAppender::ptr appender) {
+void Logger::addAppender(LogAppender::ptr appender) {
+    // 如果appender没有formatter，就把默认的传进去
+    if (!appender->getFormatter()) {
+        appender->setFormatter(m_formatter);
+    }
     m_appenders.push_back(appender);
 }
 // 删除appender
-void delAppender(LogAppender::ptr appender) {
+void Logger::delAppender(LogAppender::ptr appender) {
     // 遍历appenders集合，如果要删除的appender的指针在集合里，则删除
     for (auto it = m_appenders.begin(); it != m_appenders.end(); ++it) {
         if (*it == appender) {
@@ -221,10 +238,11 @@ void StdoutLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level leve
     if (level >= m_level) {
         std::cout << m_formatter->format(logger, level, event);
     }
+}
 
 LogFormatter::LogFormatter(const std::string& pattern) 
     :m_pattern(pattern) {
-
+    init();
 }
 
 std::string LogFormatter::format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) {
@@ -238,7 +256,7 @@ std::string LogFormatter::format(std::shared_ptr<Logger> logger, LogLevel::Level
 // 做日志格式解析
 // 格式可能为 %xxx(%后直接跟格式) 和 %xxx{xxx}(格式里还套了格式，第一个xxx格式称为str，第二个xxx称为format），
 // 但也可能就是要输出 %，即转义 %%，则需要判断
-void LogFormatter::init();        
+void LogFormatter::init() {  
     // str, format, type    
     // 如%xxx{xxx}，第一个xxx称为str格式，第二个xxx称为format格式，type 0表只有string类型的XXX，1表%XXX{XXX}类型
     std::vector<std::tuple<std::string, std::string, int>> vec;
@@ -288,6 +306,7 @@ void LogFormatter::init();
                         break;
                     }
                 }
+                ++n;
             }
         }
 
@@ -295,6 +314,7 @@ void LogFormatter::init();
         if (fmt_status == 0) {          // 只有第一个str格式的xxx，正常的情况
             if (!nstr.empty()) {        // 格式前面有normal string，也放进去
                 vec.push_back(std::make_tuple(nstr, "", 0));
+                nstr.clear();
             }
             str = m_pattern.substr(i + 1, n - i - 1);   
             vec.push_back(std::make_tuple(str, fmt, 1));    // 将解析的结果放入vector，1表正常状态
@@ -305,6 +325,7 @@ void LogFormatter::init();
         }else if (fmt_status == 2) {    // 找到了 {} ，正常情况
             if (!nstr.empty()) {        // 格式前面有normal string，也放进去
                 vec.push_back(std::make_tuple(nstr, "", 0));
+                nstr.clear();
             }
             vec.push_back(std::make_tuple(str, fmt, 1));
             i = n;
@@ -362,8 +383,7 @@ void LogFormatter::init();
         std::cout << std::get<0>(i) << " - " << std::get<1>(i) << " - " << std::get<2>(i) << std::endl;
     }
 
-}
-
+    }
 
 
 

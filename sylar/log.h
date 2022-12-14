@@ -21,7 +21,8 @@ class LogEvent
 {
 public:
     typedef std::shared_ptr<LogEvent> ptr;
-    LogEvent();
+    LogEvent(const char* file, int32_t m_line, uint32_t elapse,
+            uint32_t thread_id, uint32_t fiber_id, uint64_t time);
 
     const char* getFile() const { return m_file;}
     int32_t getLine() const { return m_line;}
@@ -29,8 +30,9 @@ public:
     uint32_t getThreadId() const { return m_threadId;}
     uint32_t getFiberId() const { return m_fiberId;}
     uint64_t getTime() const { return m_time;}
-    const std::string& getContent() const { return m_content;}
+    std::string getContent() const { return m_ss.str();}
 
+    std::stringstream& getSS() { return m_ss;}
 private:
     const char* m_file = nullptr;   // 文件名
     int32_t m_line = 0;             // 行号
@@ -38,7 +40,7 @@ private:
     uint32_t m_threadId = 0;        // 线程id
     uint32_t m_fiberId = 0;         // 协程id
     uint64_t m_time;                // 时间戳
-    std::string m_content;          // 消息
+    std::stringstream m_ss;          // 消息
 };
 
 // 日志级别
@@ -136,6 +138,7 @@ private:
     std::string m_name;                         // 日志名称
     LogLevel::Level m_level;                    // 日志级别
     std::list<LogAppender::ptr> m_appenders;    // Appender集合
+    LogFormatter::ptr m_formatter;             // 初始化的时候可能appender不需要formatter，直接用logformatter就行
 };
 
 // 定义输出到控制台的Appender
