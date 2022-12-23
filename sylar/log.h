@@ -12,6 +12,7 @@
 #include <functional>
 #include <time.h>
 #include <map>
+#include <stdarg.h>
 
 // 定义一个宏，让日志输出更友好，因为不是什么日志都要输出的
 #define SYLAR_LOG_LEVEL(logger, level) \
@@ -79,6 +80,7 @@ public:
 
     std::stringstream& getSS() { return m_ss;}
     void format(const char* fmt, ...);
+    void format(const char* fmt, va_list al);
 private:
     const char* m_file = nullptr;   // 文件名
     int32_t m_line = 0;             // 行号
@@ -99,7 +101,9 @@ class LogEventWrap
 public:
     LogEventWrap(LogEvent::ptr e);
     ~LogEventWrap();
+    LogEvent::ptr getEvent() const { return m_event;}
     std::stringstream& getSS();
+
 private:
     LogEvent::ptr m_event;
 };

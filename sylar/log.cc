@@ -31,9 +31,23 @@ const char* LogLevel::ToString(LogLevel::Level level) {
     m_event->getLogger()->log(m_event->getLevel(), m_event);
  }
 
-// 
+// 实现两种format方法
+void LogEvent::format(const char* fmt, ...) {
+    va_list al;
+    va_start(al, fmt);
+    format(fmt, al);
+    va_end(al);
+}
 
-
+void LogEvent::format(const char* fmt, va_list al) {
+    char* buf = nullptr;
+    // 根据format和数据的内容自动分配内存，成功返回长度，失败返回-1
+    int len = vasprintf(&buf, fmt, al); 
+    if (len != -1) {
+        m_ss << std::string(buf, len);
+        free(buf);
+    }
+}
 
 
 std::stringstream& LogEventWrap::getSS() {
