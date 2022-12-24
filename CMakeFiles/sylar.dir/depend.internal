@@ -4,6 +4,7 @@
 CMakeFiles/sylar.dir/sylar/log.cc.o
  /home/cxy/Projects/Sylar/sylar/log.cc
  /home/cxy/Projects/Sylar/sylar/log.h
+ /home/cxy/Projects/Sylar/sylar/singleton.h
 CMakeFiles/sylar.dir/sylar/util.cc.o
  /home/cxy/Projects/Sylar/sylar/util.cc
  /home/cxy/Projects/Sylar/sylar/util.h

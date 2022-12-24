@@ -13,6 +13,7 @@
 #include <time.h>
 #include <map>
 #include <stdarg.h>
+#include "singleton.h"
 
 // 定义一个宏，让日志输出更友好，因为不是什么日志都要输出的
 #define SYLAR_LOG_LEVEL(logger, level) \
@@ -153,9 +154,13 @@ public:
     // 不同的输出地有不同的输出格式
     void setFormatter(LogFormatter::ptr val) { m_formatter = val;}
     LogFormatter::ptr getFormatter() const { return m_formatter;}
+
+    LogLevel::Level getLevel() const { return m_level;}
+    void setLevel(LogLevel::Level val) { m_level = val;}
+
 //// 因为是基类，成员属性用protected则子类就能使用到
 protected:
-    LogLevel::Level m_level;            // 日志级别
+    LogLevel::Level m_level = LogLevel::DEBUG;            // 日志级别
     LogFormatter::ptr m_formatter;      // 输出格式
 };
 
@@ -215,8 +220,26 @@ private:
     std::ofstream m_filestream;     // ofstream是从内存到硬盘
 };
 
+// 日志管理器
+// 需要log直接从这里拿，就不需要一个个创建了
+class LoggerManager 
+{
+public:
+    LoggerManager();
+    Logger::ptr getLogger(const std::string& name);
 
-}
+    void init();
+private:
+    std::map<std::string, Logger::ptr> m_loggers;
+    Logger::ptr m_root;
+};
+
+typedef sylar::Singleton<LoggerManager> LoggerMgr;
 
 
-#endif
+
+
+}   // namespace sylar
+
+
+#endif  // !__SYLAR_LOG_H__

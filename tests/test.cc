@@ -9,10 +9,9 @@ int main(int argc, char** argv)
     logger->addAppender(sylar::LogAppender::ptr(new sylar::StdoutLogAppender));
 
     sylar::FileLogAppender::ptr file_appender(new sylar::FileLogAppender("./log.txt"));
-
-    // 自定义format
-    sylar::LogFormatter::ptr fmt(new sylar::LogFormatter("%d%T%p%T%m%n"));
+    sylar::LogFormatter::ptr fmt(new sylar::LogFormatter("%d%T%p%T%m%n"));  // 自定义format
     file_appender->setFormatter(fmt);
+    file_appender->setLevel(sylar::LogLevel::ERROR);    // 只输出error级别的日志到log.txt
 
     logger->addAppender(file_appender);
 
@@ -27,6 +26,10 @@ int main(int argc, char** argv)
     SYLAR_LOG_ERROR(logger) << "test macro error";
 
     SYLAR_LOG_FMT_ERROR(logger, "test macro fmt error %s", "aa");
+    // SYLAR_LOG_FMT_ERROR(logger, "test macro fmt error %s", "aaaaa");
+
+    auto l = sylar::LoggerMgr::GetInstance()->getLogger("xx");
+    SYLAR_LOG_ERROR(l) << "xxx";
 
     return 0;
 }

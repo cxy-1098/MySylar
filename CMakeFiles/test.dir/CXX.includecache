@@ -31,6 +31,10 @@ map
 -
 stdarg.h
 -
+singleton.h
+/home/cxy/Projects/Sylar/sylar/singleton.h
+
+/home/cxy/Projects/Sylar/sylar/singleton.h
 
 /home/cxy/Projects/Sylar/sylar/util.h
 pthread.h
