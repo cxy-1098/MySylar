@@ -13,6 +13,7 @@
 #include <time.h>
 #include <map>
 #include <stdarg.h>
+#include "util.h"
 #include "singleton.h"
 
 // 定义一个宏，让日志输出更友好，因为不是什么日志都要输出的
@@ -39,6 +40,10 @@
 #define SYLAR_LOG_FMT_WARN(logger, fmt, ...) SYLAR_LOG_FMT_LEVEL(logger, sylar::LogLevel::WARN, fmt, __VA_ARGS__)
 #define SYLAR_LOG_FMT_ERROR(logger, fmt, ...) SYLAR_LOG_FMT_LEVEL(logger, sylar::LogLevel::ERROR, fmt, __VA_ARGS__)
 #define SYLAR_LOG_FMT_FATAL(logger, fmt, ...) SYLAR_LOG_FMT_LEVEL(logger, sylar::LogLevel::FATAL, fmt, __VA_ARGS__)
+
+
+#define SYLAR_LOG_ROOT() sylar::LoggerMgr::GetInstance()->getRoot()
+
 
 namespace sylar
 {
@@ -229,6 +234,7 @@ public:
     Logger::ptr getLogger(const std::string& name);
 
     void init();
+    Logger::ptr getRoot() const { return m_root;}
 private:
     std::map<std::string, Logger::ptr> m_loggers;
     Logger::ptr m_root;

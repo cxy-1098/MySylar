@@ -11,6 +11,7 @@ set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -o0 -g -std=c++11 -Wall -Wno-depre
 set(LIB_SRC
     sylar/log.cc
     sylar/util.cc
+    sylar/config.cc
     )
 
 add_library(sylar SHARED ${LIB_SRC})    # 添加 SHARED 库，生成 so 文件
@@ -20,6 +21,10 @@ add_library(sylar SHARED ${LIB_SRC})    # 添加 SHARED 库，生成 so 文件
 add_executable(test tests/test.cc)  # 生成一个测试文件test，使用的源文件是tests/test.cc
 add_dependencies(test sylar)        # 依赖
 target_link_libraries(test sylar)   # 链接于lib
+
+add_executable(test_config tests/test_config.cc)  # 生成一个测试文件test，使用的源文件是tests/test.cc
+add_dependencies(test_config sylar)        # 依赖
+target_link_libraries(test_config sylar)   # 链接于lib
 
 # 输出 lib 生成的路径
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

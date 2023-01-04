@@ -101,16 +101,41 @@ CMakeFiles/sylar.dir/sylar/util.cc.o.provides: CMakeFiles/sylar.dir/sylar/util.c
 
 CMakeFiles/sylar.dir/sylar/util.cc.o.provides.build: CMakeFiles/sylar.dir/sylar/util.cc.o
 
+CMakeFiles/sylar.dir/sylar/config.cc.o: CMakeFiles/sylar.dir/flags.make
+CMakeFiles/sylar.dir/sylar/config.cc.o: sylar/config.cc
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/cxy/Projects/Sylar/CMakeFiles $(CMAKE_PROGRESS_3)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/sylar.dir/sylar/config.cc.o"
+	/usr/bin/g++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/sylar.dir/sylar/config.cc.o -c /home/cxy/Projects/Sylar/sylar/config.cc
+
+CMakeFiles/sylar.dir/sylar/config.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/sylar.dir/sylar/config.cc.i"
+	/usr/bin/g++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/cxy/Projects/Sylar/sylar/config.cc > CMakeFiles/sylar.dir/sylar/config.cc.i
+
+CMakeFiles/sylar.dir/sylar/config.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/sylar.dir/sylar/config.cc.s"
+	/usr/bin/g++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/cxy/Projects/Sylar/sylar/config.cc -o CMakeFiles/sylar.dir/sylar/config.cc.s
+
+CMakeFiles/sylar.dir/sylar/config.cc.o.requires:
+.PHONY : CMakeFiles/sylar.dir/sylar/config.cc.o.requires
+
+CMakeFiles/sylar.dir/sylar/config.cc.o.provides: CMakeFiles/sylar.dir/sylar/config.cc.o.requires
+	$(MAKE) -f CMakeFiles/sylar.dir/build.make CMakeFiles/sylar.dir/sylar/config.cc.o.provides.build
+.PHONY : CMakeFiles/sylar.dir/sylar/config.cc.o.provides
+
+CMakeFiles/sylar.dir/sylar/config.cc.o.provides.build: CMakeFiles/sylar.dir/sylar/config.cc.o
+
 # Object files for target sylar
 sylar_OBJECTS = \
 "CMakeFiles/sylar.dir/sylar/log.cc.o" \
-"CMakeFiles/sylar.dir/sylar/util.cc.o"
+"CMakeFiles/sylar.dir/sylar/util.cc.o" \
+"CMakeFiles/sylar.dir/sylar/config.cc.o"
 
 # External object files for target sylar
 sylar_EXTERNAL_OBJECTS =
 
 lib/libsylar.so: CMakeFiles/sylar.dir/sylar/log.cc.o
 lib/libsylar.so: CMakeFiles/sylar.dir/sylar/util.cc.o
+lib/libsylar.so: CMakeFiles/sylar.dir/sylar/config.cc.o
 lib/libsylar.so: CMakeFiles/sylar.dir/build.make
 lib/libsylar.so: CMakeFiles/sylar.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking CXX shared library lib/libsylar.so"
@@ -122,6 +147,7 @@ CMakeFiles/sylar.dir/build: lib/libsylar.so
 
 CMakeFiles/sylar.dir/requires: CMakeFiles/sylar.dir/sylar/log.cc.o.requires
 CMakeFiles/sylar.dir/requires: CMakeFiles/sylar.dir/sylar/util.cc.o.requires
+CMakeFiles/sylar.dir/requires: CMakeFiles/sylar.dir/sylar/config.cc.o.requires
 .PHONY : CMakeFiles/sylar.dir/requires
 
 CMakeFiles/sylar.dir/clean:

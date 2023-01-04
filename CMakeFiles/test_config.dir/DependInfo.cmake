@@ -4,14 +4,13 @@ SET(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 SET(CMAKE_DEPENDS_CHECK_CXX
-  "/home/cxy/Projects/Sylar/sylar/config.cc" "/home/cxy/Projects/Sylar/CMakeFiles/sylar.dir/sylar/config.cc.o"
-  "/home/cxy/Projects/Sylar/sylar/log.cc" "/home/cxy/Projects/Sylar/CMakeFiles/sylar.dir/sylar/log.cc.o"
-  "/home/cxy/Projects/Sylar/sylar/util.cc" "/home/cxy/Projects/Sylar/CMakeFiles/sylar.dir/sylar/util.cc.o"
+  "/home/cxy/Projects/Sylar/tests/test_config.cc" "/home/cxy/Projects/Sylar/CMakeFiles/test_config.dir/tests/test_config.cc.o"
   )
 SET(CMAKE_CXX_COMPILER_ID "GNU")
 
 # Targets to which this target links.
 SET(CMAKE_TARGET_LINKED_INFO_FILES
+  "/home/cxy/Projects/Sylar/CMakeFiles/sylar.dir/DependInfo.cmake"
   )
 
 # The include file search paths:
