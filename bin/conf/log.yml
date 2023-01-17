@@ -1,0 +1,17 @@
+# logs 表示一个 object
+# -  表示下面的是一个数组
+logs:
+  - name: root
+    level: info
+    formatter: "%d%T%m%n"
+    appender:
+      - type: FileLogAppender
+        file: log.txt
+        -type: StdoutLogAppendder
+  - name: system
+    level: debug
+    formatter: "%d%T%m%n"
+    appender:
+      - type: FileLogAppender
+        file: log.txt
+      - type: StdoutLogAppender

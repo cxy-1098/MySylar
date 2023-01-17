@@ -5,7 +5,9 @@ set(CMAKE_VERBOSE_MAKEFILE ON)      # 要求在make过程中显示一些详细�
 # 自定义的一些编译参数放进去
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -o0 -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function")
 
-
+include_directories(.)
+include_directories(/usr/local/include)
+link_directories(/usr/local/lib64)
 
 # 将源码设置到LIB_SRC上
 set(LIB_SRC
@@ -24,7 +26,7 @@ target_link_libraries(test sylar)   # 链接于lib
 
 add_executable(test_config tests/test_config.cc)  # 生成一个测试文件test，使用的源文件是tests/test.cc
 add_dependencies(test_config sylar)        # 依赖
-target_link_libraries(test_config sylar)   # 链接于lib
+target_link_libraries(test_config sylar yaml-cpp)   # 链接于lib
 
 # 输出 lib 生成的路径
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
