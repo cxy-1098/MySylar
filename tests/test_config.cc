@@ -8,6 +8,7 @@ sylar::ConfigVar<int>::ptr g_int_value_config =
 sylar::ConfigVar<float>::ptr g_float_value_config = 
     sylar::Config::Lookup("system.value", (float)10.2f, "system value");
 
+// 遍历打印yaml
 void print_yaml(const YAML::Node& node, int level) {
     if (node.IsScalar()) {
         SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << std::string(level * 4, ' ')
@@ -28,6 +29,7 @@ void print_yaml(const YAML::Node& node, int level) {
 }
 
 void test_yaml() {
+    // 加载 yaml
     YAML::Node root = YAML::LoadFile("/home/cxy/Projects/Sylar/bin/conf/log.yml");
     print_yaml(root, 0);
     // SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << root;
